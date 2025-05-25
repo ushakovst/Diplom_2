@@ -13,6 +13,7 @@ import api.ApiUser;
 import models.User;
 import utils.DataGenerator;
 
+import static org.apache.http.HttpStatus.SC_ACCEPTED;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
@@ -36,7 +37,13 @@ public class UserTest {
     @After
     public void tearDown() {
         if (accessToken != null) {
-            ApiUser.deleteUser(accessToken);
+            Response deleteResponse = ApiUser.deleteUser(accessToken);
+
+            //проверка, что профиль удалился
+            assertEquals(SC_ACCEPTED, deleteResponse.statusCode());
+            JsonPath json = deleteResponse.jsonPath();
+            assertTrue(json.getBoolean("success"));
+            assertEquals("User successfully removed", json.getString("message"));
         }
     }
 
@@ -56,7 +63,10 @@ public class UserTest {
     @Story("Создание пользователя")
     @Step("Создание дубликата пользователя")
     public void testCreateDuplicateUser() {
-        ApiUser.createUser(testUser);
+        Response firstResponse = ApiUser.createUser(testUser);
+        this.accessToken = firstResponse.jsonPath().getString("accessToken"); // Сохраняем токен
+
+        // Пытаемся создать дубликат
         Response response = ApiUser.createUser(testUser);
 
         assertEquals(HttpStatus.SC_FORBIDDEN, response.statusCode());

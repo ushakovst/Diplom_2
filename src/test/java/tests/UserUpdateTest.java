@@ -12,9 +12,12 @@ import api.ApiChanger;
 import api.ApiUser;
 import models.User;
 import utils.DataGenerator;
+
+import static org.apache.http.HttpStatus.SC_ACCEPTED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 
@@ -42,7 +45,13 @@ public class UserUpdateTest {
     @After
     public void tearDown() {
         if (accessToken != null) {
-            ApiUser.deleteUser(accessToken);
+            Response deleteResponse = ApiUser.deleteUser(accessToken);
+
+            //проверка, что профиль удалился
+            assertEquals(SC_ACCEPTED, deleteResponse.statusCode());
+            JsonPath json = deleteResponse.jsonPath();
+            assertTrue(json.getBoolean("success"));
+            assertEquals("User successfully removed", json.getString("message"));
         }
     }
 

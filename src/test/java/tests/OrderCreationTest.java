@@ -13,8 +13,12 @@ import api.ApiUser;
 import models.Order;
 import models.User;
 import utils.DataGenerator;
+
+import static org.apache.http.HttpStatus.SC_ACCEPTED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 @Epic("API тесты для Stellar Burgers.") //раздел системы.
@@ -22,7 +26,6 @@ import static org.junit.Assume.assumeTrue;
 public class OrderCreationTest {
     private User user;
     private String accessToken;
-    private final Faker faker = new Faker();
     private static final String VALID_INGREDIENT = "61c0c5a71d1f82001bdaaa72"; // Пример валидного ингредиента
     private static final String INVALID_INGREDIENT = "invalid_hash_123";
 
@@ -43,7 +46,13 @@ public class OrderCreationTest {
     @After
     public void tearDown() {
         if (accessToken != null) {
-            ApiUser.deleteUser(accessToken);
+            Response deleteResponse = ApiUser.deleteUser(accessToken);
+
+            //проверка, что профиль удалился
+            assertEquals(SC_ACCEPTED, deleteResponse.statusCode());
+            JsonPath json = deleteResponse.jsonPath();
+            assertTrue(json.getBoolean("success"));
+            assertEquals("User successfully removed", json.getString("message"));
         }
     }
 

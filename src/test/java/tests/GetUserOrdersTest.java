@@ -14,8 +14,11 @@ import api.ApiConfig;
 import models.Order;
 import models.User;
 import utils.DataGenerator;
+
+import static org.apache.http.HttpStatus.SC_ACCEPTED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 
@@ -24,7 +27,6 @@ import static org.junit.Assume.assumeTrue;
 public class GetUserOrdersTest {
     private User user;
     private String accessToken;
-    private final Faker faker = new Faker();
     private static final String VALID_INGREDIENT = "61c0c5a71d1f82001bdaaa72";
 
     @BeforeClass
@@ -40,6 +42,10 @@ public class GetUserOrdersTest {
         Response registerResponse = ApiUser.createUser(user);
         accessToken = registerResponse.jsonPath().getString("accessToken");
 
+        // Извлекаем токен (убедитесь, что поле "accessToken" существует в ответе)
+        this.accessToken = registerResponse.jsonPath().getString("accessToken");
+        assertNotNull("Токен не получен", accessToken);
+
         // Создание тестового заказа
         Order order = new Order(new String[]{VALID_INGREDIENT});
         ApiOrder.createOrder(order, accessToken);
@@ -48,7 +54,13 @@ public class GetUserOrdersTest {
     @After
     public void tearDown() {
         if (accessToken != null) {
-            ApiUser.deleteUser(accessToken);
+            Response deleteResponse = ApiUser.deleteUser(accessToken);
+
+            // Проверка ответа
+            assertEquals(SC_ACCEPTED, deleteResponse.statusCode());
+            JsonPath json = deleteResponse.jsonPath();
+            assertTrue(json.getBoolean("success"));
+            assertEquals("User successfully removed", json.getString("message"));
         }
     }
 
