@@ -5,8 +5,6 @@ import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import models.Order;
 
-import java.util.List;
-
 import static io.restassured.RestAssured.given;
 import static endpoints.Endpoints.ORDERS;
 

@@ -1,5 +1,6 @@
 package api;
 
+import io.qameta.allure.Step;
 import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
 
@@ -15,11 +16,13 @@ public class ApiConfig {
     private ApiConfig() {
     }
 
+    @Step("Инициализация URL")
     public static void init() {
         RestAssured.baseURI = BASE_URL;
         RestAssured.filters(new AllureRestAssured());
     }
 
+    @Step("Проверка доступности API")
     public static boolean checkApiAvailable() {
         try {
             given()
