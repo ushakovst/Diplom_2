@@ -14,7 +14,15 @@ public class ApiUser {
     public static Response createUser(User user) {
         return given()
                 .contentType("application/json")
-                .body(gson.toJson(user))
+                .body(user)
+                .post(REGISTER);
+    }
+
+    @Step("Создание пользователя без поля email")
+    public static Response createUserWithoutEmail(User user) {
+        return given()
+                .contentType("application/json")
+                .body(user)
                 .post(REGISTER);
     }
 
@@ -22,7 +30,7 @@ public class ApiUser {
     public static Response loginUser(User user) {
         return given()
                 .contentType("application/json")
-                .body(gson.toJson(user))
+                .body(user)
                 .post(LOGIN);
     }
 

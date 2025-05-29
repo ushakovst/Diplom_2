@@ -1,8 +1,8 @@
 package tests;
 
+import io.qameta.allure.junit4.DisplayName;
 import org.junit.Test;
 import api.ApiConfig;
-import net.datafaker.Faker;
 import io.qameta.allure.*;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
@@ -49,71 +49,98 @@ public class OrderCreationTest {
             Response deleteResponse = ApiUser.deleteUser(accessToken);
 
             //проверка, что профиль удалился
-            assertEquals(SC_ACCEPTED, deleteResponse.statusCode());
+            assertEquals("Статус код должен быть 202",
+                    SC_ACCEPTED, deleteResponse.statusCode());
+
             JsonPath json = deleteResponse.jsonPath();
-            assertTrue(json.getBoolean("success"));
-            assertEquals("User successfully removed", json.getString("message"));
+            assertTrue("Флаг успеха должен быть true", json.getBoolean("success"));
+            assertEquals("Сообщение должно быть корректным",
+                    "User successfully removed",
+                    json.getString("message"));
         }
     }
 
     @Test
     @Story("Создание заказа")
-    @Step("Создание заказа с авторизацией и ингредиентами")
+    @DisplayName("Создание заказа с авторизацией и ингредиентами")
+    @Description("Проверка успешного создания заказа для авторизованного пользователя с валидными ингредиентами")
     public void testCreateOrderWithAuthAndIngredients() {
         Order order = new Order(new String[]{VALID_INGREDIENT});
 
         Response response = ApiOrder.createOrder(order, accessToken);
 
-        assertThat(response.statusCode(), equalTo(HttpStatus.SC_OK));
+        assertThat("Статус код должен быть 200 OK",
+                response.statusCode(),
+                equalTo(HttpStatus.SC_OK));
+
         JsonPath json = response.jsonPath();
-        assertThat(json.getBoolean("success"), is(true));
-        assertThat(json.getInt("order.number"), greaterThan(0));
+        assertThat("Флаг успеха должен быть true", json.getBoolean("success"), is(true));
+        assertThat("Номер заказа должен быть положительным числом",
+                json.getInt("order.number"),
+                greaterThan(0));
     }
 
     @Test
     @Story("Создание заказа")
-    @Step("Создание заказа без авторизации") //ошибка в этом тесте, так как возвращает 200, вместо 401
+    @DisplayName("Создание заказа без авторизации") //ошибка в этом тесте, так как возвращает 200, вместо 401
+    @Description("Проверка обработки попытки создания заказа без токена авторизации")
     public void testCreateOrderWithoutAuth() {
         Order order = new Order(new String[]{VALID_INGREDIENT});
 
         Response response = ApiOrder.createOrderWithoutAuth(order);
 
-        assertThat(response.statusCode(), equalTo(HttpStatus.SC_UNAUTHORIZED));
+        assertThat("Статус код должен быть 401 Unauthorized",
+                response.statusCode(),
+                equalTo(HttpStatus.SC_UNAUTHORIZED));
     }
 
     @Test
     @Story("Создание заказа")
-    @Step("Создание заказа без ингредиентов")
+    @DisplayName("Создание заказа без ингредиентов")
+    @Description("Проверка обработки попытки создания заказа без указания ингредиентов")
     public void testCreateOrderWithoutIngredients() {
         Order order = new Order(new String[]{});
 
         Response response = ApiOrder.createOrder(order, accessToken);
 
-        assertThat(response.statusCode(), equalTo(HttpStatus.SC_BAD_REQUEST));
-        assertThat(response.jsonPath().getString("message"),
+        assertThat("Статус код должен быть 400 Bad Request",
+                response.statusCode(),
+                equalTo(HttpStatus.SC_BAD_REQUEST));
+
+        assertThat("Сообщение об ошибке должно быть корректным",
+                response.jsonPath().getString("message"),
                 equalTo("Ingredient ids must be provided"));
     }
 
     @Test
     @Story("Создание заказа")
-    @Step("Создание заказа с невалидным хешем ингредиента")
+    @DisplayName("Создание заказа с невалидным хешем ингредиента")
+    @Description("Проверка обработки попытки создания заказа с несуществующим хешем ингредиента")
     public void testCreateOrderWithInvalidIngredient() {
         Order order = new Order(new String[]{INVALID_INGREDIENT});
 
         Response response = ApiOrder.createOrder(order, accessToken);
 
-        assertThat(response.statusCode(), equalTo(HttpStatus.SC_INTERNAL_SERVER_ERROR));
+        assertThat("Статус код должен быть 500 Internal Server Error",
+                response.statusCode(),
+                equalTo(HttpStatus.SC_INTERNAL_SERVER_ERROR));
     }
 
     @Test
     @Story("Создание заказа")
-    @Step("Создание заказа с авторизацией и несколькими ингредиентами")
+    @DisplayName("Создание заказа с авторизацией и несколькими ингредиентами")
+    @Description("Проверка успешного создания заказа с несколькими валидными ингредиентами")
     public void testCreateOrderWithMultipleIngredients() {
         Order order = new Order(new String[]{VALID_INGREDIENT, "61c0c5a71d1f82001bdaaa73"});
 
         Response response = ApiOrder.createOrder(order, accessToken);
 
-        assertThat(response.statusCode(), equalTo(HttpStatus.SC_OK));
-        assertThat(response.jsonPath().getString("name"), containsString("бургер"));
+        assertThat("Статус код должен быть 200 OK",
+                response.statusCode(),
+                equalTo(HttpStatus.SC_OK));
+
+        assertThat("Название заказа должно содержать 'бургер'",
+                response.jsonPath().getString("name"),
+                containsString("бургер"));
     }
 }

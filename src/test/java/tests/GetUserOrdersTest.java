@@ -1,5 +1,6 @@
 package tests;
 
+import io.qameta.allure.junit4.DisplayName;
 import org.junit.Test;
 import net.datafaker.Faker;
 import io.qameta.allure.*;
@@ -57,37 +58,51 @@ public class GetUserOrdersTest {
             Response deleteResponse = ApiUser.deleteUser(accessToken);
 
             // Проверка ответа
-            assertEquals(SC_ACCEPTED, deleteResponse.statusCode());
+            assertEquals("Статус код должен быть 202",
+                    SC_ACCEPTED,
+                    deleteResponse.statusCode());
+
             JsonPath json = deleteResponse.jsonPath();
-            assertTrue(json.getBoolean("success"));
-            assertEquals("User successfully removed", json.getString("message"));
+            assertTrue("Флаг успеха должен быть true", json.getBoolean("success"));
+            assertEquals("Сообщение должно быть корректным",
+                    "User successfully removed",
+                    json.getString("message"));
         }
     }
 
     @Test
     @Story("Получение заказов")
-    @Step("Получение заказов авторизованного пользователя")
+    @DisplayName("Получение заказов авторизованного пользователя")
+    @Description("Проверка успешного получения списка заказов для авторизованного пользователя")
     public void testGetOrdersWithAuth() {
         Response response = ApiGetOrder.getUserOrdersWithAuth(accessToken);
 
         // Проверки
-        assertThat(response.statusCode(), equalTo(HttpStatus.SC_OK));
+        assertThat("Статус код должен быть 200 OK",
+                response.statusCode(),
+                equalTo(HttpStatus.SC_OK));
+
         JsonPath json = response.jsonPath();
 
-        assertThat(json.getBoolean("success"), is(true));
-        assertThat(json.getList("orders"), not(empty()));
-        assertThat(json.getInt("total"), greaterThan(0));
+        assertThat("Флаг успеха должен быть true", json.getBoolean("success"), is(true));
+        assertThat("Список заказов не должен быть пустым", json.getList("orders"), not(empty()));
+        assertThat("Общее количество заказов должно быть больше 0", json.getInt("total"), greaterThan(0));
     }
 
     @Test
     @Story("Получение заказов")
-    @Step("Получение заказов без авторизации")
+    @DisplayName("Получение заказов")
+    @Description("Проверка обработки запроса заказов без токена авторизации")
     public void testGetOrdersWithoutAuth() {
         Response response = ApiGetOrder.getUserOrdersWithoutAuth();
 
         // Проверки
-        assertThat(response.statusCode(), equalTo(HttpStatus.SC_UNAUTHORIZED));
-        assertThat(response.jsonPath().getString("message"),
+        assertThat("Статус код должен быть 401 Unauthorized",
+                response.statusCode(),
+                equalTo(HttpStatus.SC_UNAUTHORIZED));
+
+        assertThat("Сообщение об ошибке должно быть корректным",
+                response.jsonPath().getString("message"),
                 equalTo("You should be authorised"));
     }
 }

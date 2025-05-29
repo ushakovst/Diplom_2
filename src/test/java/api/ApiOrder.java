@@ -15,16 +15,16 @@ public class ApiOrder {
     public static Response createOrder(Order order, String accessToken) {
         return given()
                 .header("Authorization", accessToken)
-                .header("Content-type", "application/json")
-                .body(gson.toJson(order))
+                .contentType("application/json")
+                .body(order)
                 .post(ORDERS);
     }
 
     @Step("Создание заказа без авторизации")
     public static Response createOrderWithoutAuth(Order order) {
         return given()
-                .header("Content-type", "application/json")
-                .body(gson.toJson(order))
+                .contentType("application/json")
+                .body(order)
                 .post(ORDERS);
     }
 }

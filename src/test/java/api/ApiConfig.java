@@ -1,8 +1,12 @@
 package api;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.qameta.allure.Step;
 import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
+
+import java.lang.reflect.Type;
 
 import static io.restassured.RestAssured.given;
 import static org.apache.http.HttpStatus.*;
@@ -11,6 +15,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assume.assumeTrue;
 
 public class ApiConfig {
+
     private static final String BASE_URL = "https://stellarburgers.nomoreparties.site";
 
     private ApiConfig() {

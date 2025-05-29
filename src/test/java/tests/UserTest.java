@@ -1,5 +1,6 @@
 package tests;
 
+import io.qameta.allure.junit4.DisplayName;
 import org.junit.Test;
 import api.ApiConfig;
 import io.qameta.allure.*;
@@ -40,36 +41,118 @@ public class UserTest {
             Response deleteResponse = ApiUser.deleteUser(accessToken);
 
             //проверка, что профиль удалился
-            assertEquals(SC_ACCEPTED, deleteResponse.statusCode());
+            assertEquals("Статус код должен быть 202",
+                    SC_ACCEPTED,
+                    deleteResponse.statusCode());
+
             JsonPath json = deleteResponse.jsonPath();
-            assertTrue(json.getBoolean("success"));
-            assertEquals("User successfully removed", json.getString("message"));
+            assertTrue("Флаг успеха должен быть true", json.getBoolean("success"));
+            assertEquals("Сообщение должно быть корректным",
+                    "User successfully removed",
+                    json.getString("message"));
         }
     }
 
     @Test
     @Story("Создание пользователя")
-    @Step("Создание уникального пользователя")
+    @DisplayName("Создание уникального пользователя")
+    @Description("Проверка успешной регистрации нового пользователя с валидными данными")
     public void testCreateUserSuccess() {
         Response response = ApiUser.createUser(testUser);
 
-        assertEquals(HttpStatus.SC_OK, response.statusCode());
+        assertEquals("Статус код должен быть 200 OK",
+                HttpStatus.SC_OK,
+                response.statusCode());
+
         JsonPath json = response.jsonPath();
-        assertTrue(json.getBoolean("success"));
-        assertNotNull(json.getString("accessToken"));
+        assertTrue("Флаг успеха должен быть true", json.getBoolean("success"));
+        assertNotNull("Токен доступа должен быть получен", json.getString("accessToken"));
+
+        // сохраняем токен для удаления
+        this.accessToken = json.getString("accessToken");
     }
 
     @Test
     @Story("Создание пользователя")
-    @Step("Создание дубликата пользователя")
+    @DisplayName("Создание дубликата пользователя")
+    @Description("Проверка обработки попытки регистрации уже существующего пользователя")
     public void testCreateDuplicateUser() {
         Response firstResponse = ApiUser.createUser(testUser);
         this.accessToken = firstResponse.jsonPath().getString("accessToken"); // Сохраняем токен
 
+        // Проверка успешности создания первого пользователя
+        assertEquals("Статус код первого пользователя должен быть 200 OK",
+                HttpStatus.SC_OK,
+                firstResponse.statusCode());
+
         // Пытаемся создать дубликат
         Response response = ApiUser.createUser(testUser);
 
-        assertEquals(HttpStatus.SC_FORBIDDEN, response.statusCode());
-        assertEquals("User already exists", response.jsonPath().getString("message"));
+        assertEquals("Статус код должен быть 403 Forbidden",
+                HttpStatus.SC_FORBIDDEN,
+                response.statusCode());
+
+        assertEquals("Сообщение об ошибке должно быть корректным",
+                "User already exists",
+                response.jsonPath().getString("message"));
+    }
+
+    @Test
+    @Story("Создание пользователя")
+    @DisplayName("Создание пользователя без обязательного поля")
+    @Description("Проверка регистрации пользователя без обязательного поля в запросе: email")
+    public void testCreateUserWithoutEmail() {
+        testUser = DataGenerator.generateUserWithoutEmail();
+        Response response = ApiUser.createUserWithoutEmail(testUser);
+
+        assertEquals("Статус код должен быть 403 Forbidden",
+                HttpStatus.SC_FORBIDDEN,
+                response.statusCode());
+
+        JsonPath json = response.jsonPath();
+        assertFalse("Флаг успеха должен быть false",
+                json.getBoolean("success"));
+
+        assertEquals("Сообщение об ошибке должно быть корректным",
+                "Email, password and name are required fields",
+                response.jsonPath().getString("message"));
+    }
+
+    @Test
+    @Story("Создание пользователя")
+    @DisplayName("Создание пользователя без пароля")
+    @Description("Проверка регистрации пользователя без обязательного поля: password")
+    public void testCreateUserWithoutPassword() {
+        testUser = DataGenerator.generateUserWithoutPassword();
+        Response response = ApiUser.createUser(testUser);
+
+        assertEquals("Статус код должен быть 403 Forbidden",
+                HttpStatus.SC_FORBIDDEN,
+                response.statusCode());
+
+        JsonPath json = response.jsonPath();
+        assertFalse("Флаг успеха должен быть false", json.getBoolean("success"));
+        assertEquals("Сообщение об ошибке должно быть корректным",
+                "Email, password and name are required fields",
+                json.getString("message"));
+    }
+
+    @Test
+    @Story("Создание пользователя")
+    @DisplayName("Создание пользователя без имени")
+    @Description("Проверка регистрации пользователя без обязательного поля: name")
+    public void testCreateUserWithoutName() {
+        testUser = DataGenerator.generateUserWithoutName();
+        Response response = ApiUser.createUser(testUser);
+
+        assertEquals("Статус код должен быть 403 Forbidden",
+                HttpStatus.SC_FORBIDDEN,
+                response.statusCode());
+
+        JsonPath json = response.jsonPath();
+        assertFalse("Флаг успеха должен быть false", json.getBoolean("success"));
+        assertEquals("Сообщение об ошибке должно быть корректным",
+                "Email, password and name are required fields",
+                json.getString("message"));
     }
 }

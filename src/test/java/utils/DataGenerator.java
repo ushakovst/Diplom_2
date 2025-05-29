@@ -14,10 +14,27 @@ public class DataGenerator {
                 .build();
     }
 
-    public static User getUserWithoutEmail() {
+    public static User generateUserWithoutEmail() {
         return User.builder()
+                .email("")
                 .password(faker.internet().password(8, 16))
                 .name(faker.name().fullName())
+                .build();
+    }
+
+    public static User generateUserWithoutPassword() {
+        return User.builder()
+                .email(faker.internet().emailAddress())
+                .password("")
+                .name(faker.name().fullName())
+                .build();
+    }
+
+    public static User generateUserWithoutName() {
+        return User.builder()
+                .email(faker.internet().emailAddress())
+                .password(faker.internet().password(8, 16))
+                .name("")
                 .build();
     }
 }

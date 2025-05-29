@@ -14,16 +14,17 @@ public class ApiChanger {
     public static Response updateUser(User user, String accessToken) {
         return given()
                 .header("Authorization", accessToken)
-                .header("Content-type", "application/json")
-                .body(gson.toJson(user))
+                .contentType("application/json")
+                .body(user) // просто передает объект
                 .patch(USER);
     }
-
+//(gson.toJson(user))
+//.header("Content-type", "application/json")
     @Step("Обновление данных пользователя без авторизации")
     public static Response updateUserWithoutAuth(User user) {
         return given()
-                .header("Content-type", "application/json")
-                .body(gson.toJson(user))
+                .contentType("application/json")
+                .body(user)
                 .patch(USER);
     }
 }

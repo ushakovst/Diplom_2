@@ -1,5 +1,6 @@
 package tests;
 
+import io.qameta.allure.junit4.DisplayName;
 import org.junit.Test;
 import net.datafaker.Faker;
 import io.qameta.allure.*;
@@ -56,23 +57,30 @@ public class AuthTest {
 
     @Test
     @Story("Авторизация пользователя")
-    @Step("Успешный логин под существующим пользователем")
+    @DisplayName("Успешный логин под существующим пользователем")
+    @Description("Проверка возможности входа в систему с корректными учетными данными")
     public void testLoginWithValidCredentials() {
         // Отправляем запрос на авторизацию
         Response loginResponse = ApiUser.loginUser(validUser);
 
         // Проверяем статус и тело ответа
-        assertEquals(HttpStatus.SC_OK, loginResponse.statusCode());
+        assertEquals("Статус код должен быть 200 OK", HttpStatus.SC_OK, loginResponse.statusCode());
 
         JsonPath json = loginResponse.jsonPath();
-        assertThat(json.getBoolean("success"), is(true));
-        assertThat(json.getString("accessToken"), not(emptyString()));
-        assertThat(json.getString("refreshToken"), not(emptyString()));
+        assertThat("Флаг успеха должен быть true",
+                json.getBoolean("success"), is(true));
+
+        assertThat("Access token не должен быть пустым",
+                json.getString("accessToken"), not(emptyString()));
+
+        assertThat("Refresh token не должен быть пустым",
+                json.getString("refreshToken"), not(emptyString()));
     }
 
     @Test
     @Story("Авторизация пользователя")
-    @Step("Логин с неверным паролем")
+    @DisplayName("Логин с неверным паролем")
+    @Description("Проверка обработки неверного пароля при попытке входа")
     public void testLoginWithInvalidPassword() {
         // Создаем пользователя с неверным паролем
         User invalidUser = User.builder()
@@ -84,14 +92,19 @@ public class AuthTest {
         Response loginResponse = ApiUser.loginUser(invalidUser);
 
         // Проверки
-        assertEquals(HttpStatus.SC_UNAUTHORIZED, loginResponse.statusCode());
-        assertThat(loginResponse.jsonPath().getString("message"),
+        assertEquals("Статус код должен быть 401 Unauthorized",
+                HttpStatus.SC_UNAUTHORIZED,
+                loginResponse.statusCode());
+
+        assertThat("Сообщение об ошибке должно быть корректным",
+                loginResponse.jsonPath().getString("message"),
                 equalTo("email or password are incorrect"));
     }
 
     @Test
     @Story("Авторизация пользователя")
-    @Step("Логин с несуществующим email")
+    @DisplayName("Логин с несуществующим email")
+    @Description("Проверка обработки несуществующего email при попытке входа")
     public void testLoginWithNonExistentEmail() {
         // Генерируем случайный несуществующий email
         User invalidUser = User.builder()
@@ -101,8 +114,12 @@ public class AuthTest {
 
         Response loginResponse = ApiUser.loginUser(invalidUser);
 
-        assertEquals(HttpStatus.SC_UNAUTHORIZED, loginResponse.statusCode());
-        assertThat(loginResponse.jsonPath().getString("message"),
+        assertEquals("Статус код должен быть 401 Unauthorized",
+                HttpStatus.SC_UNAUTHORIZED,
+                loginResponse.statusCode());
+
+        assertThat("Сообщение об ошибке должно быть корректным",
+                loginResponse.jsonPath().getString("message"),
                 equalTo("email or password are incorrect"));
     }
 }

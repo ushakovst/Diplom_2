@@ -1,5 +1,6 @@
 package tests;
 
+import io.qameta.allure.junit4.DisplayName;
 import org.junit.Test;
 import api.ApiConfig;
 import net.datafaker.Faker;
@@ -48,16 +49,22 @@ public class UserUpdateTest {
             Response deleteResponse = ApiUser.deleteUser(accessToken);
 
             //проверка, что профиль удалился
-            assertEquals(SC_ACCEPTED, deleteResponse.statusCode());
+            assertEquals("Статус код должен быть 202",
+                    SC_ACCEPTED,
+                    deleteResponse.statusCode());
+
             JsonPath json = deleteResponse.jsonPath();
-            assertTrue(json.getBoolean("success"));
-            assertEquals("User successfully removed", json.getString("message"));
+            assertTrue("Флаг успеха должен быть true", json.getBoolean("success"));
+            assertEquals("Сообщение должно быть корректным",
+                    "User successfully removed",
+                    json.getString("message"));
         }
     }
 
     @Test
     @Story("Изменение данных пользователя")
-    @Step("Успешное обновление данных с авторизацией")
+    @DisplayName("Успешное обновление данных с авторизацией")
+    @Description("Проверка успешного обновления данных с валидными данными")
     public void testUpdateUserWithAuth() {
         // Генерируем новые данные
         User updatedUser = User.builder()
@@ -69,42 +76,64 @@ public class UserUpdateTest {
         Response response = ApiChanger.updateUser(updatedUser, accessToken);
 
         // Проверки ответа
-        assertEquals(HttpStatus.SC_OK, response.statusCode());
+        assertEquals("Статус код должен быть 200 OK",
+                HttpStatus.SC_OK,
+                response.statusCode());
 
         JsonPath json = response.jsonPath();
-        assertThat(json.getBoolean("success"), is(true));
-        assertThat(json.getString("user.email"), equalTo(updatedUser.getEmail()));
-        assertThat(json.getString("user.name"), equalTo(updatedUser.getName()));
+        assertThat("Флаг успеха должен быть true", json.getBoolean("success"), is(true));
+
+        assertThat("Email должен соответствовать обновленному значению",
+                json.getString("user.email"),
+                equalTo(updatedUser.getEmail()));
+
+        assertThat("Имя должно соответствовать обновленному значению",
+                json.getString("user.name"),
+                equalTo(updatedUser.getName()));
     }
 
     @Test
     @Story("Изменение данных пользователя")
-    @Step("Обновление данных без авторизации")
+    @DisplayName("Обновление данных без авторизации")
+    @Description("Проверка обработки попытки обновления данных без авторизации")
     public void testUpdateUserWithoutAuth() {
         User updatedUser = User.builder()
                 .email(faker.internet().emailAddress())
+                .password(originalUser.getPassword())
                 .name(faker.name().fullName())
                 .build();
 
         Response response = ApiChanger.updateUserWithoutAuth(updatedUser);
 
         // Проверки
-        assertEquals(HttpStatus.SC_UNAUTHORIZED, response.statusCode());
-        assertThat(response.jsonPath().getString("message"),
+        assertEquals("Статус код должен быть 401 Unauthorized",
+                HttpStatus.SC_UNAUTHORIZED,
+                response.statusCode());
+
+        assertThat("Сообщение об ошибке должно быть корректным",
+                response.jsonPath().getString("message"),
                 equalTo("You should be authorised"));
     }
 
     @Test
     @Story("Изменение данных пользователя")
-    @Step("Обновление пароля с авторизацией")
+    @DisplayName("Обновление пароля с авторизацией")
+    @Description("Проверка успешного обновление пароля с авторизацией")
     public void testUpdatePasswordWithAuth() {
         User updatedUser = User.builder()
-                .password(faker.internet().password(10, 16))
+                .email(originalUser.getEmail())
+                .password(faker.internet().password(8, 16))
+                .name(originalUser.getName())
                 .build();
 
         Response response = ApiChanger.updateUser(updatedUser, accessToken);
 
-        assertEquals(HttpStatus.SC_OK, response.statusCode());
-        assertThat(response.jsonPath().getBoolean("success"), is(true));
+        assertEquals("Статус код должен быть 200 OK",
+                HttpStatus.SC_OK,
+                response.statusCode());
+
+        assertThat("Флаг успеха должен быть true",
+                response.jsonPath().getBoolean("success"),
+                is(true));
     }
 }
